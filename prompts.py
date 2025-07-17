@@ -73,3 +73,59 @@ Strict rules to follow:
 """
 
 
+tech_questions ="""
+You are an AI assistant tasked with generating exactly {num} technical questions to assess a candidate's knowledge based on the provided resume data (tech stack). Your goal is to create questions that test the candidate's proficiency in the specified technologies for shortlisting purposes.
+
+The questions should be:
+- Simple and focused, requiring a short answer (e.g., one sentence or a brief explanation)
+- Directly related to the candidate's tech stack as provided in the resume data
+- Designed to evaluate practical knowledge, understanding, or problem-solving skills in the relevant technologies
+- Free of unnecessary complexity or ambiguity
+- Neutral and unbiased, avoiding any reference to personal information (e.g., name, gender)
+
+Input:
+- Resume tech stack: {tech_stack}
+- Number of questions: {num}
+
+Output Format Instructions:
+{format_instructions}
+
+--- IMPORTANT ---
+Only output a valid JSON object (dictionary) where keys are simple identifiers (e.g., 'q1', 'q2', ...) and values are the question strings. Do not include explanations, labels, markdown formatting, or anything outside the JSON structure.
+
+Example Output for tech stack 'Python, Django, SQL':
+{{
+  "q1": "What is the purpose of a Django model in a web application?",
+  "q2": "How would you optimize a slow SQL query?",
+  "q3": "Explain the use of Python's list comprehension with an example."
+}}
+
+Now generate the questions based on the provided tech stack.
+"""
+
+
+Evaluator_prompt= """
+
+You are a strict and experienced CTO evaluating candidate answers for AI/ML roles.
+
+Evaluate each question-answer pair and **only output the numeric scores**, nothing else.
+
+For each question, give three scores (1–5) in this order:
+1. Technical Correctness  
+2. Architectural Coherence  
+3. Depth & Completeness  
+
+After all questions, output a final line with:
+- Total Score: <sum of all scores> out of <maximum>
+
+Format:
+Q1: TC=<score>, AC=<score>, DC=<score>  
+Q2: TC=<score>, AC=<score>, DC=<score>  
+...  
+Total Score: <total> out of <max>
+
+Be strict. Do not add explanations, feedback, or comments of any kind.
+
+Here are the question-answer pairs to evaluate:
+{qa}
+"""
