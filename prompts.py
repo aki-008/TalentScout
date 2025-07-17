@@ -61,7 +61,7 @@ Working under: {hr_manager_name}
 Instructions for response:
 1. Begin with 'Hi' and introduce yourself as {agent_name}, an AI assistant working under {hr_manager_name}.
 2. Briefly explain that your role is to assist in evaluating and shortlisting candidates in a structured, unbiased, and data-driven manner.
-3. Prompt the user to upload a resume or provide candidate details to proceed with the evaluation.
+3. Prompt the user to upload a resume to proceed with the evaluation.
 4. Do not respond with the greeting or introduction unless the input is exactly 'START'.
 Strict rules to follow:
 1. Do not assume, infer, or fabricate any information not explicitly provided in the input or candidate details.
@@ -104,24 +104,24 @@ Now generate the questions based on the provided tech stack.
 """
 
 
-Evaluator_prompt= """
+Evaluator_prompt = """
 
 You are a strict and experienced CTO evaluating candidate answers for AI/ML roles.
 
 Evaluate each question-answer pair and **only output the numeric scores**, nothing else.
 
 For each question, give three scores (1–5) in this order:
-1. Technical Correctness  
-2. Architectural Coherence  
-3. Depth & Completeness  
+1. Technical Correctness
+2. Architectural Coherence
+3. Depth & Completeness
 
 After all questions, output a final line with:
 - Total Score: <sum of all scores> out of <maximum>
 
 Format:
-Q1: TC=<score>, AC=<score>, DC=<score>  
-Q2: TC=<score>, AC=<score>, DC=<score>  
-...  
+Q1: TC=<score>, AC=<score>, DC=<score>
+Q2: TC=<score>, AC=<score>, DC=<score>
+...
 Total Score: <total> out of <max>
 
 Be strict. Do not add explanations, feedback, or comments of any kind.

@@ -20,7 +20,7 @@ import bs4
 from langchain import hub
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_core.documents import Document
-from langchain.document_loaders import DirectoryLoader, TextLoader
+from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from langchain_community.document_loaders import PyPDFLoader, PyMuPDFLoader
 
 
@@ -41,7 +41,7 @@ if "GROQ_API_KEY" not in os.environ or not os.getenv("GROQ_API_KEY"):
 # --- LLM Initialization ---
 try:
     llm = ChatGroq(
-        model="llama3-8b-8192",
+        model="llama-3.3-70b-versatile",
         temperature=0.2,
     )
     logger.info("LLM loaded successfully")
@@ -53,7 +53,7 @@ except Exception as e:
 class Hirebot(TypedDict):
     """Defines the state for the graph."""
     user_name: Optional[str]
-    greet_user: Optional[str]
+    resume_path: Optional[str]
     resume_parsed: Optional[str]
     tech_questions: Optional[Dict[str, str]]
     answers: Optional[Dict[str, str]]
@@ -83,33 +83,24 @@ def greet_user(state: Hirebot) -> dict:
     
     chain = prompt | llm
 
-    greet = chain.invoke({"input":"START","candidate_name": "John Doe", "agent_name":"janus", "hr_manager_name": "radhika"})
+    greet = chain.invoke({"input":"START","candidate_name": candidate_name, "agent_name":"janus", "hr_manager_name": "radhika"})
     print(greet.content)
     logger.info("Greeting generated.")
+    path = input("Enter the path to your resume: ")
     
-
-    return {"greet_user": greet.content}
+    return {"resume_path": path}
 
 def resume_loader(path_to_resume):
-
-    loader = DirectoryLoader(
-                path_to_resume,
-                glob="**/*.pdf",
-                loader_cls=PyMuPDFLoader,
-                show_progress=True,  # Optional: Displays a progress bar
-                use_multithreading=True  # Optional: Enables multithreading for faster loading
-            )
-
-    langchian_loader = loader.load() 
-    resume_data =langchian_loader[0].page_content
-    return resume_data
+    loader = PyMuPDFLoader(path_to_resume)
+    documents = loader.load()
+    return documents[0].page_content
 
 def Parse_resume(state: Hirebot) -> dict:
     logger.info('Node: Make Question started')
-
+    resume_path = state["resume_path"]
     data = resume_loader(resume_path)
     parser = JsonOutputParser()
-    parser.get_format_instructions()
+    # parser.get_format_instructions()
     prompt = PromptTemplate(
         template=(resume_parser_prompt),
         input_variables=["RESUME"],
@@ -117,20 +108,21 @@ def Parse_resume(state: Hirebot) -> dict:
 
     )
 
-    chain = prompt | llm |parser
+    chain = prompt | llm | parser
     parsed_resume = chain.invoke({"RESUME": data})
     return {"resume_parsed": parsed_resume}
 
 def Tech_question(state: Hirebot) -> dict:
     """Generates clarifying questions based on the initial query using an LLM."""
     # logger.info("Node: make_question execution started.")
+    resume_data = state["resume_parsed"]
     questions = {}
     num = 3 # Number of questions to generate
     parser = JsonOutputParser()
     # Corrected Example Output to be valid JSON
     prompt = PromptTemplate(
         template=(tech_questions),
-        input_variables=["num", "resume_data"],
+        input_variables=["num", "tech_stack"],
         partial_variables={"format_instructions": parser.get_format_instructions()},
     )
 
@@ -140,16 +132,17 @@ def Tech_question(state: Hirebot) -> dict:
     return {"tech_questions": questions}
 
 def answers(state: Hirebot) -> dict:
+
+    questions = state["tech_questions"]
     answers = {}
     for i in questions:
         answers[questions[i]] = input(f"Question {i}: {questions[i]}")
     print(answers)
-    print(type(answers))
     return {"answers": answers}
 
-def Get_reults(state: Hirebot) -> dict:
+def Get_results(state: Hirebot) -> dict:
     """Generates clarifying questions based on the initial query using an LLM."""
-
+    answers = state["answers"]
     prompt = PromptTemplate(
         template=(Evaluator_prompt),
         input_variables=["qa"],
@@ -157,18 +150,19 @@ def Get_reults(state: Hirebot) -> dict:
 
     chain = prompt | llm 
 
-    results = chain.invoke({"qa": answers})
-    return {"results": results}
+    results_message = chain.invoke({"qa": answers})
+    return {"results": results_message.content}
 
 def print_final_state(state: Hirebot) -> None:
     """Prints the final state of the graph."""
     logger.info("Node: print_final_state execution started.")
-    print("\n--- Final State ---")
-    # Print the actual greeting message received from the user
-    if state.get("greet_user"):
-        print(state["greet_user"])
-    # Pretty print the full dictionary state for debugging
-    print("\n--- Full State Object ---")
+    print("\n--- Evaluation Results ---")
+    if state.get("results"):
+        # This will now print the clean string from the LLM
+        print(state['results'])
+
+    print("\n--- Full State Object (for debugging) ---")
+    # This will now work because 'results' is a string
     print(json.dumps(state, indent=2))
     print("--- End of State ---")
     logger.info("Final state printed.")
@@ -183,7 +177,7 @@ graph_builder.add_node("greet", greet_user)
 graph_builder.add_node("parse_resume", Parse_resume)
 graph_builder.add_node("tech_questions", Tech_question)
 graph_builder.add_node("answers", answers)
-graph_builder.add_node("results", Get_reults)
+graph_builder.add_node("results", Get_results)
 graph_builder.add_node("print_state", print_final_state)
 
 # Set the entry point
@@ -191,7 +185,11 @@ graph_builder.set_entry_point("get_name")
 
 # Add edges to define the flow
 graph_builder.add_edge("get_name", "greet")
-graph_builder.add_edge("greet", "print_state")
+graph_builder.add_edge("greet", "parse_resume")
+graph_builder.add_edge("parse_resume", "tech_questions")
+graph_builder.add_edge("tech_questions", "answers")
+graph_builder.add_edge("answers", "results")
+graph_builder.add_edge("results", "print_state")
 
 # Set the finish point
 graph_builder.set_finish_point("print_state")
@@ -205,8 +203,11 @@ if __name__ == "__main__":
     print("🚀 Starting Hirebot Agent...")
     initial_state: Hirebot = {
         "user_name": None,
-        "greet_user": None,
+        "resume_path": None,
         "resume_parsed": None,
+        "tech_questions": None,
+        "answers": None,
+        "results": None
     }
     # Invoke the graph. The initial state is empty.
     hirebot_graph.invoke(initial_state)
