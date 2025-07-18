@@ -153,20 +153,33 @@ def Get_results(state: Hirebot) -> dict:
     results_message = chain.invoke({"qa": answers})
     return {"results": results_message.content}
 
-def print_final_state(state: Hirebot) -> None:
-    """Prints the final state of the graph."""
-    logger.info("Node: print_final_state execution started.")
-    print("\n--- Evaluation Results ---")
-    if state.get("results"):
-        # This will now print the clean string from the LLM
-        print(state['results'])
+def sendoff_node(state: Hirebot) -> None:
+    candidate_name = state["user_name"]
+    message = f"""
+    Thank you for completing the initial steps of the hiring process, {candidate_name}. 🙌
+    Our team will carefully evaluate your responses and resume.
+    You will be notified via email or message if you are selected for the next round.
+    We appreciate your patience and interest in this opportunity!
+    """
 
-    print("\n--- Full State Object (for debugging) ---")
-    # This will now work because 'results' is a string
-    print(json.dumps(state, indent=2))
-    print("--- End of State ---")
-    logger.info("Final state printed.")
-    return None
+    print(message)
+    
+
+
+# def print_final_state(state: Hirebot) -> None:
+#     """Prints the final state of the graph."""
+#     logger.info("Node: print_final_state execution started.")
+#     print("\n--- Evaluation Results ---")
+#     if state.get("results"):
+#         # This will now print the clean string from the LLM
+#         print(state['results'])
+
+#     print("\n--- Full State Object (for debugging) ---")
+#     # This will now work because 'results' is a string
+#     print(json.dumps(state, indent=2))
+#     print("--- End of State ---")
+#     logger.info("Final state printed.")
+#     return None
 
 # --- Graph Definition ---
 graph_builder = StateGraph(Hirebot)
@@ -178,7 +191,8 @@ graph_builder.add_node("parse_resume", Parse_resume)
 graph_builder.add_node("tech_questions", Tech_question)
 graph_builder.add_node("answers", answers)
 graph_builder.add_node("results", Get_results)
-graph_builder.add_node("print_state", print_final_state)
+# graph_builder.add_node("print_state", print_final_state)
+graph_builder.add_node("sendoff", sendoff_node)
 
 # Set the entry point
 graph_builder.set_entry_point("get_name")
@@ -189,10 +203,10 @@ graph_builder.add_edge("greet", "parse_resume")
 graph_builder.add_edge("parse_resume", "tech_questions")
 graph_builder.add_edge("tech_questions", "answers")
 graph_builder.add_edge("answers", "results")
-graph_builder.add_edge("results", "print_state")
+graph_builder.add_edge("results", "sendoff")
 
 # Set the finish point
-graph_builder.set_finish_point("print_state")
+graph_builder.set_finish_point("sendoff")
 
 # Compile the graph
 hirebot_graph = graph_builder.compile()

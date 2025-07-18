@@ -129,3 +129,10 @@ Be strict. Do not add explanations, feedback, or comments of any kind.
 Here are the question-answer pairs to evaluate:
 {qa}
 """
+
+sendoff_node_prompt = """
+Thank you for completing the initial steps of the hiring process, {candidate_name}. 🙌
+Our team will carefully evaluate your responses and resume.
+You will be notified via email or message if you are selected for the next round.
+We appreciate your patience and interest in this opportunity!
+"""
