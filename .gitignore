@@ -3,8 +3,8 @@ test.ipynb
 .log
 resume.json
 .png
-
-
+uploads/
+.vs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
