@@ -1,5 +1,7 @@
 # 🌈 Hirebot – AI-Powered Hiring Assistant
 
+<img src='https://github.com/aki-008/TalentScout/blob/main/img/logo.jpg' alt="Talenscout" width="350">
+
 **Hirebot** is an intelligent AI agent that streamlines the first-round technical screening of job candidates. It parses resumes, generates personalized technical questions, evaluates answers, and provides honest feedback using a combination of LLMs, FastAPI, and Streamlit.
 
 ---
