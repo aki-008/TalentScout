@@ -120,11 +120,7 @@ The evaluation module acts like a tough CTO:
 
 ---
 
-## ✨ Credits
-
----
-
-## ❓ License
+## License
 
 This project is licensed under the **MIT License**.
 
