@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from prompts import greet_prompt_template, resume_parser_prompt, tech_questions, Evaluator_prompt
+from app.prompts import greet_prompt_template, resume_parser_prompt, tech_questions, Evaluator_prompt
 from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
